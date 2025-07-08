@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings2, BookOpen, Bot, SquareTerminal, Users } from "lucide-react";
+import { Settings2, BookOpen, Bot, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
