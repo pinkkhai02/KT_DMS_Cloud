@@ -29,15 +29,15 @@ const data = {
       items: [
         {
           title: "Nhóm khách hàng",
-          url: "/GroupCustomers",
+          url: "dashboard/groupCustomers",
         },
         {
           title: "Loại khách hàng",
-          url: "/TypeCustomers",
+          url: "/typeCustomers",
         },
         {
           title: "Danh sách khách hàng",
-          url: "ListCustomers",
+          url: "listCustomers",
         },
       ],
     },
