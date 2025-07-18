@@ -33,7 +33,7 @@ const data = {
         },
         {
           title: "Loại khách hàng",
-          url: "/typeCustomers",
+          url: "dashboard/typeCustomers",
         },
         {
           title: "Danh sách khách hàng",
@@ -55,7 +55,7 @@ const data = {
           url: "#",
         },
         {
-          title: "Quantum",
+          title: "Qua",
           url: "#",
         },
       ],
