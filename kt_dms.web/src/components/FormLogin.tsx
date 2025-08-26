@@ -1,16 +1,38 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 interface FormLoginProps {
   className?: string;
 }
 
 const FormLogin: React.FC<FormLoginProps> = ({ className, ...props }) => {
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const { login, isLoading, loginError } = useAuth();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await login({ code, password });
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form
+      onSubmit={handleSubmit}
+      className={cn("flex flex-col gap-6", className)}
+      {...props}
+    >
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Login to your account</h1>
         <p className="text-muted-foreground text-sm text-balance">
@@ -19,23 +41,39 @@ const FormLogin: React.FC<FormLoginProps> = ({ className, ...props }) => {
       </div>
       <div className="grid gap-6">
         <div className="grid gap-3">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="m@example.com" required />
+          <Label htmlFor="Code">Code</Label>
+          <Input
+            id="code"
+            type="text"
+            placeholder="DMS0001"
+            required
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
         </div>
         <div className="grid gap-3">
           <div className="flex items-center">
             <Label htmlFor="password">Password</Label>
-            <a
+            {/* <a
               href="#"
               className="ml-auto text-sm underline-offset-4 hover:underline"
             >
               Forgot your password?
-            </a>
+            </a> */}
           </div>
-          <Input id="password" type="password" required />
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
-        <Button type="submit" className="w-full">
-          Login
+        {loginError && (
+          <div className="text-red-600 text-sm">{loginError.message}</div>
+        )}
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
         <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
           <span className="bg-background text-muted-foreground relative z-10 px-2">
