@@ -1,4 +1,4 @@
-// Base API configuration
+// lib/api.ts
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://localhost:7220/api";
 
@@ -8,33 +8,34 @@ export interface ApiResponse<T> {
   status: number;
 }
 
+import { useUserStore } from "@/stores/useUserStore";
+
 class ApiClient {
   private baseURL: string;
   private token: string | null = null;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
-    // Lấy token từ localStorage nếu có
     if (typeof window !== "undefined") {
-      this.token = localStorage.getItem("access_token");
+      this.token = useUserStore.getState().token;
     }
   }
 
   setToken(token: string) {
     this.token = token;
     if (typeof window !== "undefined") {
-      localStorage.setItem("access_token", token);
+      useUserStore.getState().setToken(token);
     }
   }
 
   clearToken() {
     this.token = null;
     if (typeof window !== "undefined") {
-      localStorage.removeItem("access_token");
+      useUserStore.getState().clearUser();
+      window.location.href = "/login";
     }
   }
 
-  // Method chung để call API
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -56,13 +57,15 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.text();
+      if (response.status === 401) {
+        this.clearToken();
+      }
       throw new Error(error || `HTTP error! status: ${response.status}`);
     }
 
     return response.json();
   }
 
-  // GET method
   get<T>(endpoint: string, headers?: HeadersInit) {
     return this.request<T>(endpoint, {
       method: "GET",
@@ -70,7 +73,6 @@ class ApiClient {
     });
   }
 
-  // POST method
   post<T>(endpoint: string, data?: unknown, headers?: HeadersInit) {
     return this.request<T>(endpoint, {
       method: "POST",
@@ -79,7 +81,6 @@ class ApiClient {
     });
   }
 
-  // PUT method
   put<T>(endpoint: string, data?: unknown, headers?: HeadersInit) {
     return this.request<T>(endpoint, {
       method: "PUT",
@@ -88,7 +89,6 @@ class ApiClient {
     });
   }
 
-  // DELETE method
   delete<T>(endpoint: string, headers?: HeadersInit) {
     return this.request<T>(endpoint, {
       method: "DELETE",
@@ -97,5 +97,4 @@ class ApiClient {
   }
 }
 
-// Export instance để sử dụng
 export const apiClient = new ApiClient(API_BASE_URL);
