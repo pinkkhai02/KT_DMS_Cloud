@@ -1,65 +1,59 @@
-// src/services/authService.ts
-import axiosInstance from "@/lib/axios.customize";
+import { apiClient } from "@/lib/api";
+import { LoginRequest, LoginResponse, User } from "@/types/user";
 
-// Types cho login
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  token: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
+class AuthApiService {
+  private readonly endpoints = {
+    login: "/auth/login",
+    logout: "/auth/logout",
+    refresh: "/auth/refresh",
+    profile: "/auth/profile",
+    forgotPassword: "/auth/forgot-password",
+    resetPassword: "/auth/reset-password",
   };
-  refreshToken?: string;
-  expiresIn: number;
-}
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-}
-
-// Auth Service
-export class AuthService {
-  // Login
-  static async login(credentials: LoginRequest): Promise<LoginResponse> {
-    try {
-      const response = await axiosInstance.post<LoginResponse>(
-        "/auth/login",
-        credentials
-      );
-      return response.data;
-    } catch (error) {
-      //throw this.handleError(error);
-      throw error;
-    }
+  async login(credentials: LoginRequest): Promise<LoginResponse> {
+    const response = await apiClient.post<LoginResponse>(
+      this.endpoints.login,
+      credentials
+    );
+    return response.data;
   }
 
-  // Logout
-  static async logout(): Promise<void> {
-    try {
-      await axiosInstance.post("/auth/logout");
-    } catch (error) {
-      console.error("Logout error:", error);
-      // Vẫn tiếp tục logout local nếu API lỗi
-    }
+  async logout(): Promise<void> {
+    await apiClient.post(this.endpoints.logout);
   }
 
-  // Get current user
-  static async getCurrentUser(): Promise<User> {
-    try {
-      const response = await axiosInstance.get<User>("/auth/me");
-      return response.data;
-    } catch (error) {
-      // throw this.handleError(error);
-      throw error;
-    }
+  async refreshToken(refreshToken: string): Promise<{
+    token: string;
+    refreshToken?: string;
+  }> {
+    const response = await apiClient.post<{
+      token: string;
+      refreshToken?: string;
+    }>(this.endpoints.refresh, {
+      refreshToken,
+    });
+    return response.data;
   }
+
+  async getProfile(): Promise<User> {
+    const response = await apiClient.get<User>(this.endpoints.profile);
+    return response.data;
+  }
+
+  // async forgotPassword(email: string): Promise<{ message: string }> {
+  //   const response = await apiClient.post(this.endpoints.forgotPassword, {
+  //     email,
+  //   });
+  //   return response.data;
+  // }
+
+  // async resetPassword(token: string, password: string): Promise<{ message: string }> {
+  //   const response = await apiClient.post(this.endpoints.resetPassword, {
+  //     token,
+  //     password,
+  //   });
+  //   return response.data;
+  // }
 }
+export const authApiService = new AuthApiService();

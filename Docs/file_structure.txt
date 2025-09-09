@@ -1,0 +1,146 @@
+📁 src/ - Source Code chính
+Thư mục chứa toàn bộ mã nguồn của ứng dụng.
+📁 src/app/ - App Router Directory
+
+Chức năng: Thư mục chính cho App Router của Next.js 13+
+Mục đích: Chứa các route, layout, page components theo cấu trúc file-based routing mới
+
+📁 src/assets/ - Tài nguyên tĩnh
+
+Chức năng: Lưu trữ các file tài nguyên như hình ảnh, font, icons
+Mục đích: Tổ chức các asset được import trực tiếp vào code
+
+📁 src/components/ - React Components
+
+Chức năng: Chứa các React component có thể tái sử dụng
+Mục đích: Tổ chức các UI component dùng chung trong toàn bộ ứng dụng
+Ví dụ: Button, Modal, Header, Footer, Form components
+
+📁 src/hooks/ - Custom React Hooks
+
+Chức năng: Chứa các custom hooks
+Mục đích: Logic tái sử dụng, state management, side effects
+Ví dụ: useAuth,....
+
+📁 src/layouts/ - Layout Components
+
+Chức năng: Các layout wrapper components
+Mục đích: Định nghĩa cấu trúc layout chung cho các trang
+Ví dụ: MainLayout, AuthLayout, DashboardLayout
+
+📁 src/lib/ - Utility Libraries
+
+Chức năng: Các thư viện tiện ích và helper functions
+Mục đích: Utils, constants, configurations, API clients
+Ví dụ: API helpers, validation schemas, utility functions
+
+📁 src/providers/ - Context Providers
+
+Chức năng: React Context Providers
+Mục đích: Global state management, theme providers, auth providers
+Ví dụ: AuthProvider, ThemeProvider, QueryProvider
+
+📁 src/stores/ - State Management
+
+Chức năng: Store cho state management (Zustand) chỉ dùng với client
+Mục đích: Quản lý global state của ứng dụng
+Ví dụ: Zustand stores
+
+📁 public/ - Static Assets
+
+Chức năng: Thư mục public của Next.js
+Mục đích: Chứa các file tĩnh được serve trực tiếp
+Ví dụ: favicon.ico, images
+
+🗂️ Environment Files
+📄 .env.local
+
+Chức năng: Environment variables cho development local
+Mục đích: Chứa các biến môi trường 
+
+📄 .env.production
+
+Chức năng: Environment variables cho production
+Mục đích: Cấu hình cho môi trường production
+
+⚙️ Configuration Files
+📄 .gitignore
+
+Chức năng: Định nghĩa các file/folder bị Git bỏ qua
+Mục đích: Tránh commit các file không cần thiết
+
+📄 components.json
+
+Chức năng: Cấu hình cho shadcn/ui components
+Mục đích: Định nghĩa path và style cho UI components
+
+📄 eslint.config.mjs
+
+Chức năng: Cấu hình ESLint
+Mục đích: Code linting rules và standards
+
+📄 next-env.d.ts
+
+Chức năng: TypeScript declarations cho Next.js
+Mục đích: Type definitions tự động được generate
+
+📄 next.config.js
+
+Chức năng: Cấu hình Next.js
+Mục đích: Build settings, redirects, headers, image optimization
+
+📄 package-lock.json
+
+Chức năng: Lock file cho npm dependencies
+Mục đích: Đảm bảo version consistency
+
+📄 package.json
+
+Chức năng: Project metadata và dependencies
+Mục đích: Scripts, dependencies, project information
+
+📄 postcss.config.mjs
+
+Chức năng: Cấu hình PostCSS
+Mục đích: CSS processing plugins (Tailwind CSS, Autoprefixer)
+
+📄 tsconfig.json
+
+Chức năng: Cấu hình TypeScript
+Mục đích: Compiler options, path mapping, type checking
+
+📚 Documentation Files
+📄 README.md
+
+Chức năng: Project documentation chính
+Mục đích: Hướng dẫn cài đặt, sử dụng, development
+
+
+1. App Router Structure
+src/app/
+ 📁 app/
+├── 📁 dashboard/
+│   ├── 📁 groupCustomers/ # Children page dashboard
+│   │   ├── 📄 page.tsx
+│   │   └── 📄 layout.tsx
+│   ├── 📄 page.tsx  	# Dashboard page
+│   └── 📄 layout.tsx 	# Dashboard layout
+├── 📁 login/
+│   ├── 📄 layout.tsx 	# Login layout
+│   └── 📄 page.tsx  	# Login page
+├── favicon.ico
+├── 📄 layout.tsx   # Root layout
+└── 📄 page.tsx	    # Home page
+
+
+2. Component Organization
+
+📁 components/
+├── 📁 providers/  	# Context providers cho global state
+├── 📁 SideBar/		# Sidebar navigation components
+├── 📁 ui/ 		# Basic UI primitives
+├── 📄 AppBarChart.tsx
+├── 📄 FormLogin.tsx
+└── 📄 Navbar.tsx
+
+
