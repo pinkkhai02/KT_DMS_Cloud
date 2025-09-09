@@ -1,127 +1,130 @@
-"use client";
-
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { apiClient } from "@/lib/api";
-import authService from "@/services/authService";
-import { useUserStore } from "@/stores/useUserStore";
+import { authApiService } from "@/services/authService";
+import { useAuthStore } from "@/stores/useUserStore";
+import { LoginRequest } from "@/types/user";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export const useAuth = () => {
-  const queryClient = useQueryClient();
   const {
-    setUser,
-    clearUser,
     user,
+    accessToken,
+    //refreshToken,
     isAuthenticated,
-    isTokenValid,
-    initializeAuth,
-  } = useUserStore();
+    isLoading: storeLoading,
+    error: storeError,
+    setLoading,
+    setError,
+    login: loginStore,
+    logout: logoutStore,
+    clearError,
+    setTokens,
+  } = useAuthStore();
 
-  // Initialize auth on mount
-  useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
-  // Login mutation
   const loginMutation = useMutation({
-    mutationFn: authService.login,
+    mutationFn: (credentials: LoginRequest) =>
+      authApiService.login(credentials),
+    onMutate: () => {
+      setLoading(true);
+      clearError();
+    },
     onSuccess: (response) => {
-      if (response.success) {
-        apiClient.setToken(response.token);
-        setUser(response.user, response.token);
-        queryClient.setQueryData(["user"], response.user);
-        // Lưu token vào cookie
-        document.cookie = `token=${response.token}; path=/; max-age=3600; secure; samesite=strict`;
-      } else {
-        throw new Error(response.message || "Đăng nhập thất bại");
+      if (!response.success) {
+        throw new Error(response.message || "Login failed");
       }
+      loginStore(response);
+      apiClient.setToken(response.token);
+      queryClient.invalidateQueries({ queryKey: ["user"] });
     },
-    onError: (error: Error) => {
-      if (error.message.includes("401")) {
-        apiClient.clearToken();
-        clearUser();
-        document.cookie = "token=; path=/; max-age=0";
-      }
+    onError: (error: any) => {
+      const errorMessage = error.message || "Invalid email or password";
+      setError(errorMessage);
+    },
+    onSettled: () => {
+      setLoading(false);
     },
   });
 
-  // Register mutation
-  const registerMutation = useMutation({
-    mutationFn: authService.register,
-    onSuccess: (response) => {
-      if (response.success) {
-        apiClient.setToken(response.token);
-        setUser(response.user, response.token);
-        queryClient.setQueryData(["user"], response.user);
-        // Lưu token vào cookie
-        document.cookie = `token=${response.token}; path=/; max-age=3600; secure; samesite=strict`;
-      } else {
-        throw new Error(response.message || "Đăng ký thất bại");
-      }
+  const logoutMutation = useMutation({
+    mutationFn: () => authApiService.logout(),
+    onMutate: () => {
+      setLoading(true);
     },
-    onError: (error: Error) => {
-      if (error.message.includes("401")) {
-        apiClient.clearToken();
-        clearUser();
-        document.cookie = "token=; path=/; max-age=0";
-      }
-    },
-  });
-
-  // Get current user query
-  const {
-    data: currentUser,
-    isLoading,
-    error: userQueryError,
-  } = useQuery({
-    queryKey: ["user"],
-    queryFn: authService.getCurrentUser,
-    enabled: !!apiClient && typeof window !== "undefined" && isTokenValid(),
-    retry: (failureCount, error) => {
-      if (error?.message?.includes("401")) {
-        apiClient.clearToken();
-        clearUser();
-        document.cookie = "token=; path=/; max-age=0";
-        return false;
-      }
-      return failureCount < 3;
-    },
-  });
-
-  // Handle query errors
-  useEffect(() => {
-    if (userQueryError && userQueryError.message.includes("401")) {
+    onSuccess: () => {
+      logoutStore();
       apiClient.clearToken();
-      clearUser();
-      queryClient.clear();
-      document.cookie = "token=; path=/; max-age=0";
-    }
-  }, [userQueryError, clearUser, queryClient]);
+      router.push("/auth/login");
+    },
+    onError: (error) => {
+      console.warn("Logout API call failed:", error);
+      logoutStore();
+      apiClient.clearToken();
+      router.push("/auth/login");
+    },
+    onSettled: () => {
+      setLoading(false);
+    },
+  });
+  // Refresh token mutation
+  const refreshTokenMutation = useMutation({
+    mutationFn: (refreshToken: string) =>
+      authApiService.refreshToken(refreshToken),
+    onSuccess: (response) => {
+      setTokens(response.token, response.refreshToken);
+      apiClient.setToken(response.token);
+    },
+    onError: (error) => {
+      console.error("Token refresh failed:", error);
+      logoutStore();
+      apiClient.clearToken();
+      router.push("/auth/login");
+    },
+  });
 
-  // Sync currentUser with store
+  // Profile query
+  // const profileQuery = useQuery({
+  //   queryKey: ['user'],
+  //   queryFn: () => authApiService.getProfile(),
+  //   enabled: !!accessToken, // Chỉ chạy khi có accessToken
+  //   onSuccess: (user) => {
+  //     useAuthStore.getState().setUser(user); // Cập nhật user vào store
+  //   },
+  //   onError: (error) => {
+  //     console.error('Failed to fetch profile:', error);
+  //     setError(error instanceof Error ? error.message : 'Failed to fetch profile');
+  //   },
+  // });
+
+  // Initialize auth on app start
   useEffect(() => {
-    if (currentUser && (!user || user.code !== currentUser.code)) {
-      setUser(currentUser);
+    if (accessToken) {
+      apiClient.setToken(accessToken);
     }
-  }, [currentUser, setUser, user]);
-
-  // Logout function
-  const logout = () => {
-    apiClient.clearToken();
-    clearUser();
-    queryClient.clear();
-    document.cookie = "token=; path=/; max-age=0";
-  };
+  }, [accessToken]);
 
   return {
-    login: loginMutation.mutateAsync,
-    register: registerMutation.mutateAsync,
-    logout,
-    user: user || currentUser || null,
+    user,
     isAuthenticated,
     isLoading:
-      loginMutation.isPending || registerMutation.isPending || isLoading,
-    loginError: loginMutation.error,
-    registerError: registerMutation.error,
+      storeLoading ||
+      loginMutation.isPending ||
+      logoutMutation.isPending ||
+      refreshTokenMutation.isPending,
+    //profileQuery.isLoading,
+    error:
+      storeError ||
+      loginMutation.error?.message ||
+      logoutMutation.error?.message ||
+      refreshTokenMutation.error?.message,
+    //profileQuery.error?.message,
+    login: loginMutation.mutateAsync,
+    logout: logoutMutation.mutateAsync,
+    refreshToken: refreshTokenMutation.mutateAsync,
+    clearError,
+    //profile: profileQuery.data,
   };
 };

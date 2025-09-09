@@ -124,7 +124,7 @@ const AppSidebar = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="/">
+              <Link href="/dashboard">
                 <Image src={logo} alt="logo" width={30} height={30} />
                 <span>DMS DEV</span>
               </Link>

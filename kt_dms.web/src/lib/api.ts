@@ -8,7 +8,7 @@ export interface ApiResponse<T> {
   status: number;
 }
 
-import { useUserStore } from "@/stores/useUserStore";
+import { useAuthStore } from "@/stores/useUserStore";
 
 class ApiClient {
   private baseURL: string;
@@ -16,30 +16,31 @@ class ApiClient {
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
+    // Chỉ truy cập store trong môi trường client-side
     if (typeof window !== "undefined") {
-      this.token = useUserStore.getState().token;
+      this.token = useAuthStore.getState().accessToken; // Sử dụng accessToken từ useAuthStore
     }
   }
 
   setToken(token: string) {
     this.token = token;
     if (typeof window !== "undefined") {
-      useUserStore.getState().setToken(token);
+      useAuthStore.getState().setTokens(token, undefined); // Gọi setTokens, refreshToken là undefined
     }
   }
 
   clearToken() {
     this.token = null;
     if (typeof window !== "undefined") {
-      useUserStore.getState().clearUser();
-      window.location.href = "/login";
+      useAuthStore.getState().logout(); // Gọi logout từ useAuthStore
+      window.location.href = "/auth/login"; // Điều hướng đến trang login
     }
   }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<T> {
+  ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     const headers = new Headers({
       "Content-Type": "application/json",
@@ -55,15 +56,22 @@ class ApiClient {
       headers,
     });
 
+    const responseData = await response.json().catch(() => ({})); // Xử lý trường hợp response không phải JSON
+
     if (!response.ok) {
-      const error = await response.text();
-      if (response.status === 401) {
+      if (response.status === 401 && endpoint !== "/auth/login") {
         this.clearToken();
       }
-      throw new Error(error || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        responseData.message || `HTTP error! status: ${response.status}`
+      );
     }
 
-    return response.json();
+    return {
+      data: responseData.data || responseData, // Linh hoạt với cấu trúc response
+      message: responseData.message,
+      status: response.status,
+    };
   }
 
   get<T>(endpoint: string, headers?: HeadersInit) {

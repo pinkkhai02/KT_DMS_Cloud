@@ -1,85 +1,75 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { AuthState, User, LoginResponse } from "@/types/user";
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  avatar?: string;
-  role?: string;
-}
-
-interface UserState {
-  // State
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-
+interface AuthStore extends AuthState {
   // Actions
-  setUser: (user: User, token?: string) => void;
-  clearUser: () => void;
-  updateUser: (updates: Partial<User>) => void;
-  setToken: (token: string) => void;
-  isTokenValid: () => boolean;
-  initializeAuth: () => void;
+  setUser: (user: User) => void;
+  setTokens: (accessToken: string, refreshToken?: string) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  login: (response: LoginResponse) => void;
+  logout: () => void;
+  clearError: () => void;
+  updateProfile: (userData: Partial<User>) => void;
 }
 
-export const useUserStore = create<UserState>()(
+export const useAuthStore = create<AuthStore>()(
   persist(
-    (set, get) => ({
+    //(set, get) => ({
+    (set) => ({
       // Initial state
       user: null,
-      token: null,
+      accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
+      isLoading: false,
+      error: null,
 
       // Actions
-      setUser: (user, token) =>
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
+
+      setTokens: (accessToken, refreshToken) =>
+        set({ accessToken, refreshToken }),
+
+      setLoading: (isLoading) => set({ isLoading }),
+
+      setError: (error) => set({ error }),
+
+      login: (response) =>
         set({
-          user,
-          token: token || get().token,
-          isAuthenticated: true,
+          user: response.user,
+          accessToken: response.token, // Sử dụng response.token thay vì response.accessToken
+          refreshToken: response.refreshToken || null, // refreshToken là optional
+          isAuthenticated: !!response.user,
+          isLoading: false,
+          error: null,
         }),
 
-      clearUser: () =>
+      logout: () =>
         set({
           user: null,
-          token: null,
+          accessToken: null,
+          refreshToken: null,
           isAuthenticated: false,
+          isLoading: false,
+          error: null,
         }),
 
-      updateUser: (updates) => {
-        const currentUser = get().user;
-        if (currentUser) {
-          set({ user: { ...currentUser, ...updates } });
-        }
-      },
+      clearError: () => set({ error: null }),
 
-      setToken: (token) => set({ token }),
-
-      isTokenValid: (): boolean => {
-        const { token } = get();
-        if (!token) return false;
-
-        try {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          return payload.exp > Date.now() / 1000;
-        } catch {
-          return false;
-        }
-      },
-
-      initializeAuth: () => {
-        const { token, isTokenValid, clearUser } = get();
-        if (token && !isTokenValid()) {
-          clearUser();
-        }
-      },
+      updateProfile: (userData) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...userData } : null,
+        })),
     }),
     {
-      name: "user-storage", // localStorage key
+      name: "auth-storage",
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

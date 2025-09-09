@@ -1,40 +1,59 @@
 import { apiClient } from "@/lib/api";
-import { User } from "@/stores/useUserStore";
+import { LoginRequest, LoginResponse, User } from "@/types/user";
 
-interface LoginCredentials {
-  code: string;
-  password: string;
+class AuthApiService {
+  private readonly endpoints = {
+    login: "/auth/login",
+    logout: "/auth/logout",
+    refresh: "/auth/refresh",
+    profile: "/auth/profile",
+    forgotPassword: "/auth/forgot-password",
+    resetPassword: "/auth/reset-password",
+  };
+
+  async login(credentials: LoginRequest): Promise<LoginResponse> {
+    const response = await apiClient.post<LoginResponse>(
+      this.endpoints.login,
+      credentials
+    );
+    return response.data;
+  }
+
+  async logout(): Promise<void> {
+    await apiClient.post(this.endpoints.logout);
+  }
+
+  async refreshToken(refreshToken: string): Promise<{
+    token: string;
+    refreshToken?: string;
+  }> {
+    const response = await apiClient.post<{
+      token: string;
+      refreshToken?: string;
+    }>(this.endpoints.refresh, {
+      refreshToken,
+    });
+    return response.data;
+  }
+
+  async getProfile(): Promise<User> {
+    const response = await apiClient.get<User>(this.endpoints.profile);
+    return response.data;
+  }
+
+  // async forgotPassword(email: string): Promise<{ message: string }> {
+  //   const response = await apiClient.post(this.endpoints.forgotPassword, {
+  //     email,
+  //   });
+  //   return response.data;
+  // }
+
+  // async resetPassword(token: string, password: string): Promise<{ message: string }> {
+  //   const response = await apiClient.post(this.endpoints.resetPassword, {
+  //     token,
+  //     password,
+  //   });
+  //   return response.data;
+  // }
 }
-
-interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
-interface LoginResponse {
-  success: boolean;
-  token: string;
-  message: string;
-  user: User;
-}
-
-const authService = {
-  login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-    return await apiClient.post<LoginResponse>("/auth/login", credentials);
-  },
-
-  register: async (userData: RegisterData): Promise<LoginResponse> => {
-    return await apiClient.post<LoginResponse>("/auth/register", userData);
-  },
-
-  getCurrentUser: async (): Promise<User> => {
-    const response = await apiClient.get<LoginResponse>("/auth/me");
-    if (!response.success) {
-      throw new Error(response.message || "Không thể lấy thông tin người dùng");
-    }
-    return response.user;
-  },
-};
-export default authService;
+export const authApiService = new AuthApiService();
