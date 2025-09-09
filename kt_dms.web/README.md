@@ -26,6 +26,7 @@ markdown# Tài liệu Dự án
 
 ### Gốc dự án (`kt_dms.web/`)
 
+```
 ├── node_modules/ # Thư viện cài qua npm/yarn
 ├── public/ # File tĩnh (ảnh, favicon, ...)
 ├── src/ # Code chính
@@ -52,6 +53,8 @@ markdown# Tài liệu Dự án
 ├── postcss.config.mjs # Cấu hình PostCSS (thường dùng với TailwindCSS)
 ├── README.md / README.md.txt # Tài liệu mô tả dự án
 └── tsconfig.json # Cấu hình TypeScript
+```
+
 text### Chi tiết vai trò
 
 - **`node_modules/`**: Nơi lưu trữ các thư viện được cài đặt bằng npm hoặc yarn.
